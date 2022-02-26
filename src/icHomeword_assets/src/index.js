@@ -17,3 +17,5 @@ document.querySelector("form").addEventListener("submit", async (e) => {
 
   return false;
 });
+
+// const qsort = arr => (arr.length > 1 ? (([h, ...t]) => [].concat(qsort(t.filter(x => x <= h)),[h],qsort(t.filter(x => x > h))))(arr) : arr);
