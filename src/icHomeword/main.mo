@@ -44,7 +44,7 @@ actor ICHomework {
     stable var messages: List.List<Message> = List.nil();
 
     public shared(msg) func post(text: Text) : async () {
-        // assert(Principal.toText(msg.caller) == "ninf7-o7cqb-munqg-a5ypi-xcrzi-njyy6-ckagk-a4gcc-5t3pv-dmstw-xae");
+        assert(Principal.toText(msg.caller) == "ninf7-o7cqb-munqg-a5ypi-xcrzi-njyy6-ckagk-a4gcc-5t3pv-dmstw-xae");
         let _msg : Message = {
             text;
             time = Time.now();
