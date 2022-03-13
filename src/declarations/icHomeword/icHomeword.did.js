@@ -7,6 +7,7 @@ export const idlFactory = ({ IDL }) => {
     'post' : IDL.Func([IDL.Text], [], []),
     'posts' : IDL.Func([Time], [IDL.Vec(Message)], ['query']),
     'timeline' : IDL.Func([Time], [IDL.Vec(Message)], []),
+    'unfollow' : IDL.Func([IDL.Principal], [], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

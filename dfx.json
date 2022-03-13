@@ -4,10 +4,6 @@
       "main": "src/icHomeword/main.mo",
       "type": "motoko"
     },
-    "icHomeword2": {
-      "main": "src/icHomeword/main.mo",
-      "type": "motoko"
-    },
     "icHomeword_assets": {
       "dependencies": [
         "icHomeword"

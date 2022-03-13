@@ -10,4 +10,5 @@ service : {
   post: (text) -> ();
   posts: (Time) -> (vec Message) query;
   timeline: (Time) -> (vec Message);
+  unfollow: (principal) -> ();
 }

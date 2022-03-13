@@ -7,4 +7,5 @@ export interface _SERVICE {
   'post' : (arg_0: string) => Promise<undefined>,
   'posts' : (arg_0: Time) => Promise<Array<Message>>,
   'timeline' : (arg_0: Time) => Promise<Array<Message>>,
+  'unfollow' : (arg_0: Principal) => Promise<undefined>,
 }
