@@ -1,13 +1,25 @@
+type User = 
+ record {
+   id: principal;
+   name: text;
+ };
 type Time = int;
 type Message = 
  record {
+   author: text;
    "text": text;
    time: Time;
  };
 service : {
   follow: (principal) -> ();
-  follows: () -> (vec principal) query;
-  post: (text) -> ();
-  posts: (Time) -> (vec Message) query;
-  timeline: (Time) -> (vec Message);
+  follows: () -> (vec User) query;
+  get_name: () -> (text) query;
+  post: (text, text) -> ();
+  posts: () -> (vec Message) query;
+  postsById: (principal) -> (vec Message);
+  postsByTime: (Time) -> (vec Message) query;
+  set_name: (text, text) -> ();
+  timeline: () -> (vec Message);
+  timelineByTime: (Time) -> (vec Message);
+  unfollow: (principal) -> ();
 }
