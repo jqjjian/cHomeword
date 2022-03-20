@@ -35,12 +35,11 @@ async function setName() {
 }
 
 async function getPosts(pid, postList) {
-  console.log(pid)
   let posts = []
   if (pid) {
     posts = await icHomeword.postsById(pid)
   } else {
-    posts = await icHomeword.posts()
+    posts = await icHomeword.posts(0)
   }
   const section = document.querySelector('#section');
   const arr = posts.map(v => {
@@ -122,7 +121,6 @@ async function getFollowed() {
   const unfollowItems = followTable.querySelectorAll('.unfollow')
   let postsList = document.querySelector('#postsList')
   if (!postsList) {
-    console.log(123)
     postsList = document.createElement('div')
     postsList.id = 'postsList'
     section.appendChild(postsList)

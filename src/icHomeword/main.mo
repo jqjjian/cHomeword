@@ -16,24 +16,24 @@ actor ICHomework {
     // 第5课作业
     public type Message = {
         text : Text;
-        time : Time.Time;
+        time : Int;
         author : Text;
     };
 
     public type User = {
         id: Principal;
-        name: Text;
+        name: ?Text;
     };
 
     public type Microblog = actor {
         follow : shared(Principal) -> async (); // 添加关注对象
         follows : shared query () -> async [User];
         post : shared (Text) -> async ();
-        posts : shared query () -> async [Message];
+        posts : shared query (Int) -> async [Message];
         postsById : shared (Principal) -> async [Message];
-        postsByTime : shared query (Time.Time) -> async [Message];
+        postsByTime : shared query (Int) -> async [Message];
         timeline : shared () -> async [Message];
-        timelineByTime : shared (Time.Time) -> async [Message];
+        timelineByTime : shared (Int) -> async [Message];
         set_name : shared (Text) -> async Text;
         get_name : shared query() -> async ?Text;
     };
@@ -74,7 +74,7 @@ actor ICHomework {
     public shared func postsById(id : Principal) : async [Message] {
         // var all : List.List<Message> = List.nil();
         let canister : Microblog = actor(Principal.toText(id));
-        let msgs = await canister.posts();
+        let msgs = await canister.posts(0);
         msgs
         // msgs := await canister.posts();
         // for (msg in Iter.fromArray(msgs)) {
@@ -83,12 +83,12 @@ actor ICHomework {
         // List.toArray(all)
     };
 
-    public shared query func postsByTime(since : Time.Time) : async [Message] {
+    public shared query func postsByTime(since : Int) : async [Message] {
         let filterMsg: List.List<Message> = List.filter(messages, func (msg: Message): Bool {msg.time > since});
         List.toArray(filterMsg)
     };
 
-    public shared query func posts() : async [Message] {
+    public shared query func posts(since : Int) : async [Message] {
         List.toArray(messages)
     };
 
@@ -96,7 +96,7 @@ actor ICHomework {
         var all : List.List<Message> = List.nil();
         for (user in Iter.fromList(followed)) {
             let canister : Microblog = actor(Principal.toText(user.id));
-            let msgs = await canister.posts();
+            let msgs = await canister.posts(0);
             for (msg in Iter.fromArray(msgs)) {
                 all := List.push(msg, all)
             }
@@ -104,7 +104,7 @@ actor ICHomework {
         List.toArray(all)
     };
 
-    public shared func timelineByTime(since: Time.Time) : async [Message] {
+    public shared func timelineByTime(since: Int) : async [Message] {
         var all : List.List<Message> = List.nil();
         for (user in Iter.fromList(followed)) {
             let canister : Microblog = actor(Principal.toText(user.id));
@@ -122,8 +122,8 @@ actor ICHomework {
         author := name;
     };
 
-    public shared query func get_name() : async Text {
-        author
+    public shared query func get_name() : async ?Text {
+        return ?author
     };
     // 第三课作业
     // counter
