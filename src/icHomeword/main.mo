@@ -16,11 +16,6 @@ import Logger "mo:ic-logger/Logger";
 actor ICHomework {
     // 进阶第1课作业
     let PAGE_SIZE : Nat = 4;
-    var currentPage : Nat = 0;
-    var size: Nat = 0;
-
-    stable var len: Nat = 0;
-    
     let buckets = Buffer.Buffer<Buckets.Bucket>(0);
     private func getBucket() : async Buckets.Bucket {
         if (buckets.size() == 0) {
