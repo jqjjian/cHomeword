@@ -10,121 +10,184 @@ import Nat8 "mo:base/Nat8";
 import Principal "mo:base/Principal";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
-
-
+import Buckets "./Buckets";
+import Buffer "mo:base/Buffer";
+import Logger "mo:ic-logger/Logger";
 actor ICHomework {
+    // 进阶第1课作业
+    let PAGE_SIZE : Nat = 4;
+    var currentPage : Nat = 0;
+    var size: Nat = 0;
+
+    stable var len: Nat = 0;
+    
+    let buckets = Buffer.Buffer<Buckets.Bucket>(0);
+    private func getBucket() : async Buckets.Bucket {
+        if (buckets.size() == 0) {
+            let b = await Buckets.Bucket();
+            buckets.add(b);
+            b;
+        } else {
+            let bucket = buckets.get(buckets.size() - 1);
+            let state =  await bucket.stats();
+            switch (state.bucket_sizes[0] >= PAGE_SIZE) {
+                case (true) {
+                    let b = await Buckets.Bucket();
+                    buckets.add(b);
+                    b;
+                };
+                case (false) bucket;
+            };
+        };
+    };
+    
+    public shared func append(msgs: [Text]): async() {
+        for (msg in msgs.vals()) {
+            let bucket = await getBucket();
+            bucket.append(Array.make(msg));
+        };
+        let bucket = buckets.get(buckets.size() - 1);
+        let state =  await bucket.stats();
+        Debug.print(debug_show(state));
+    };
+
+    public shared func view(from: Nat, to: Nat):  async [Text] {
+        let result : Buffer.Buffer<Text> = Buffer.Buffer<Text>(0);
+        let total = buckets.size() * PAGE_SIZE;
+        assert(from >= 0 and from <= to and to + 1 <= total);
+        if (total > 0) {
+            let pages = Iter.toArray(Iter.range(from / PAGE_SIZE, to / PAGE_SIZE));
+            for(i in Iter.range(from / PAGE_SIZE, to / PAGE_SIZE)) {
+                let bucket = buckets.get(i);
+                var v: Logger.View<Text> = {messages = [""]; start_index = 0};
+                if (i == pages[0]) {
+                    v := await bucket.view(from % PAGE_SIZE, PAGE_SIZE);
+                } else if (i == pages[Iter.size(Iter.range(from / PAGE_SIZE, to / PAGE_SIZE)) - 1]) {
+                    v := await bucket.view(0, to % PAGE_SIZE);
+                } else {
+                    v := await bucket.view(0, PAGE_SIZE);
+                };
+                if(v.messages.size() > 0) {
+                    for(j in Iter.range(0, v.messages.size() - 1)) {
+                        Debug.print(v.messages[j]);
+                        result.add(v.messages[j]);
+                    };
+                };
+            };
+        };
+        result.toArray();
+    };
+
+
+
+
+
     // 第5课作业
-    public type Message = {
-        text : Text;
-        time : Int;
-        author : Text;
-    };
+    // public type Message = {
+    //     text : Text;
+    //     time : Int;
+    //     author : Text;
+    // };
 
-    public type User = {
-        id: Principal;
-        name: ?Text;
-    };
+    // public type User = {
+    //     id: Principal;
+    //     name: ?Text;
+    // };
 
-    public type Microblog = actor {
-        follow : shared(Principal) -> async (); // 添加关注对象
-        follows : shared query () -> async [User];
-        post : shared (Text) -> async ();
-        posts : shared query (Int) -> async [Message];
-        postsById : shared (Principal) -> async [Message];
-        postsByTime : shared query (Int) -> async [Message];
-        timeline : shared () -> async [Message];
-        timelineByTime : shared (Int) -> async [Message];
-        set_name : shared (Text) -> async Text;
-        get_name : shared query() -> async ?Text;
-    };
+    // public type Microblog = actor {
+    //     follow : shared(Principal) -> async (); // 添加关注对象
+    //     follows : shared query () -> async [User];
+    //     post : shared (Text) -> async ();
+    //     posts : shared query (Int) -> async [Message];
+    //     postsById : shared (Principal) -> async [Message];
+    //     postsByTime : shared query (Int) -> async [Message];
+    //     timeline : shared () -> async [Message];
+    //     timelineByTime : shared (Int) -> async [Message];
+    //     set_name : shared (Text) -> async Text;
+    //     get_name : shared query() -> async ?Text;
+    // };
 
-    stable var followed : List.List<User> = List.nil();
+    // stable var followed : List.List<User> = List.nil();
 
-    public shared func follow(id: Principal): async () {
-        let canister : Microblog = actor(Principal.toText(id));
-        let name = await canister.get_name();
-        let user: User = {
-            id;
-            name;
-        };
-        followed := List.push(user, followed)
-    };
+    // public shared func follow(id: Principal): async () {
+    //     let canister : Microblog = actor(Principal.toText(id));
+    //     let name = await canister.get_name();
+    //     let user: User = {
+    //         id;
+    //         name;
+    //     };
+    //     followed := List.push(user, followed)
+    // };
 
-    public shared func unfollow(id: Principal): async () {
-        followed := List.filter(followed, func(user: User) : Bool {user.id != id })
-    };
+    // public shared func unfollow(id: Principal): async () {
+    //     followed := List.filter(followed, func(user: User) : Bool {user.id != id })
+    // };
 
-    public shared query func follows() : async [User] {
-        List.toArray(followed)
-    };
+    // public shared query func follows() : async [User] {
+    //     List.toArray(followed)
+    // };
 
-    stable var messages: List.List<Message> = List.nil();
-    stable var author: Text = "";
-    public shared(msg) func post(text: Text, psw: Text) : async () {
-        assert(psw == "123123");
-        let _msg : Message = {
-            text;
-            time = Time.now();
-            author = author;
+    // stable var messages: List.List<Message> = List.nil();
+    // stable var author: Text = "";
+    // public shared(msg) func post(text: Text, psw: Text) : async () {
+    //     assert(psw == "123123");
+    //     let _msg : Message = {
+    //         text;
+    //         time = Time.now();
+    //         author = author;
 
-        };
-        messages := List.push(_msg, messages)
-    };
+    //     };
+    //     messages := List.push(_msg, messages)
+    // };
 
-    public shared func postsById(id : Principal) : async [Message] {
-        // var all : List.List<Message> = List.nil();
-        let canister : Microblog = actor(Principal.toText(id));
-        let msgs = await canister.posts(0);
-        msgs
-        // msgs := await canister.posts();
-        // for (msg in Iter.fromArray(msgs)) {
-        //     all := List.push(msg, all)
-        // };
-        // List.toArray(all)
-    };
+    // public shared func postsById(id : Principal) : async [Message] {
+    //     let canister : Microblog = actor(Principal.toText(id));
+    //     let msgs = await canister.posts(0);
+    //     msgs
+    // };
 
-    public shared query func postsByTime(since : Int) : async [Message] {
-        let filterMsg: List.List<Message> = List.filter(messages, func (msg: Message): Bool {msg.time > since});
-        List.toArray(filterMsg)
-    };
+    // public shared query func postsByTime(since : Int) : async [Message] {
+    //     let filterMsg: List.List<Message> = List.filter(messages, func (msg: Message): Bool {msg.time > since});
+    //     List.toArray(filterMsg)
+    // };
 
-    public shared query func posts(since : Int) : async [Message] {
-        List.toArray(messages)
-    };
+    // public shared query func posts(since : Int) : async [Message] {
+    //     List.toArray(messages)
+    // };
 
-    public shared func timeline() : async [Message] {
-        var all : List.List<Message> = List.nil();
-        for (user in Iter.fromList(followed)) {
-            let canister : Microblog = actor(Principal.toText(user.id));
-            let msgs = await canister.posts(0);
-            for (msg in Iter.fromArray(msgs)) {
-                all := List.push(msg, all)
-            }
-        };
-        List.toArray(all)
-    };
+    // public shared func timeline() : async [Message] {
+    //     var all : List.List<Message> = List.nil();
+    //     for (user in Iter.fromList(followed)) {
+    //         let canister : Microblog = actor(Principal.toText(user.id));
+    //         let msgs = await canister.posts(0);
+    //         for (msg in Iter.fromArray(msgs)) {
+    //             all := List.push(msg, all)
+    //         }
+    //     };
+    //     List.toArray(all)
+    // };
 
-    public shared func timelineByTime(since: Int) : async [Message] {
-        var all : List.List<Message> = List.nil();
-        for (user in Iter.fromList(followed)) {
-            let canister : Microblog = actor(Principal.toText(user.id));
-            let msgs = await canister.postsByTime(since);
-            for (msg in Iter.fromArray(msgs)) {
-                all := List.push(msg, all)
-            }
-        };
-        let filterMsg: List.List<Message> = List.filter(all, func (msg: Message): Bool {msg.time > since});
-        List.toArray(filterMsg)
-    };
+    // public shared func timelineByTime(since: Int) : async [Message] {
+    //     var all : List.List<Message> = List.nil();
+    //     for (user in Iter.fromList(followed)) {
+    //         let canister : Microblog = actor(Principal.toText(user.id));
+    //         let msgs = await canister.postsByTime(since);
+    //         for (msg in Iter.fromArray(msgs)) {
+    //             all := List.push(msg, all)
+    //         }
+    //     };
+    //     let filterMsg: List.List<Message> = List.filter(all, func (msg: Message): Bool {msg.time > since});
+    //     List.toArray(filterMsg)
+    // };
 
-    public shared func set_name(name: Text, psw: Text) : async() {
-        assert(psw == "123123");
-        author := name;
-    };
+    // public shared func set_name(name: Text, psw: Text) : async() {
+    //     assert(psw == "123123");
+    //     author := name;
+    // };
 
-    public shared query func get_name() : async ?Text {
-        return ?author
-    };
+    // public shared query func get_name() : async ?Text {
+    //     return ?author
+    // };
     // 第三课作业
     // counter
     // stable var currentValue : Nat = 0;
